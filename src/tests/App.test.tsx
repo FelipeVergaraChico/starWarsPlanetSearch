@@ -30,8 +30,7 @@ test('filtros funcionam', async () => {
    expect(planeta).toBeInTheDocument();
    expect(planeta2).toBeInTheDocument();
    expect(planeta3).toBeInTheDocument();
-   await userEvent.type((screen.getByDisplayValue(/0/i)), '510000000')
+   await userEvent.type((screen.getByDisplayValue(/0/i)), '4500000000')
    const planeta5 = screen.getByText(/Coruscant/i)
-
    expect(planeta5).toBeInTheDocument();
 })
