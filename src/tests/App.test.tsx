@@ -3,7 +3,12 @@ import { waitFor, render, screen } from '@testing-library/react';
 import App from '../App';
 import userEvent from '@testing-library/user-event';
 import fetchPlanetsAPI from '../API/fetchPlanetsAPI';
+import { MockPlanets } from './mock/MockPlanets';
+import { vi } from 'vitest';
 test('Testa se é renderizado botão pra adicionar filtro', async () => {
+  global.fetch = vi.fn().mockResolvedValue({
+    json: async () => MockPlanets,
+  });
   render(<App />);
  await waitFor(() => expect(screen.getByPlaceholderText(/Nome do Planeta/i)).toBeInTheDocument(), {
   timeout: 6000,
@@ -19,6 +24,9 @@ test('Testa se é renderizado botão pra adicionar filtro', async () => {
 });
 
 test('filtros funcionam', async () => {
+  global.fetch = vi.fn().mockResolvedValue({
+    json: async () => MockPlanets,
+  });
   render(<App/>);
   await waitFor(() => expect(screen.getByPlaceholderText(/Nome do Planeta/i)).toBeInTheDocument(), {
     timeout: 6000,
@@ -30,7 +38,8 @@ test('filtros funcionam', async () => {
    expect(planeta).toBeInTheDocument();
    expect(planeta2).toBeInTheDocument();
    expect(planeta3).toBeInTheDocument();
-   await userEvent.type((screen.getByDisplayValue(/0/i)), '4500000000')
-   const planeta5 = screen.getByText(/Coruscant/i)
-   expect(planeta5).toBeInTheDocument();
+   await userEvent.type((screen.getByDisplayValue(/0/i)), '1000000000')
+   expect(planeta2).toBeInTheDocument();
+   expect(planeta3).toBeInTheDocument();
+   expect(screen.getByText(/Endor/i)).toBeInTheDocument()
 })
