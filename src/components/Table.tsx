@@ -1,45 +1,84 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { PlanetType } from '../type';
+import { PlanetType, FiltroAplicadoType } from '../type';
 import TableContext from '../context/TableContext';
 
 function Table() {
+  const initialState = [
+    'population',
+    'orbital_period',
+    'diameter',
+    'rotation_period',
+    'surface_water',
+  ];
+
   const [planetss, setPlanets] = useState<PlanetType[]>([]);
-  const [coluna, setColuna] = useState('population');
-  const [operador, setOperador] = useState('maior que');
-  const [numero, setNumero] = useState('0');
+  const [multipleFilter, setMultipleFilter] = useState(initialState);
+  const [column, setColumn] = useState('population');
+  const [operator, setOperator] = useState('maior que');
+  const [number, setNumber] = useState('0');
+  const [filtroAplicado, setFiltroAplicado] = useState<FiltroAplicadoType[]>([]);
   const tablecontext = useContext(TableContext);
 
   useEffect(() => {
     setPlanets(tablecontext);
-  }, []);
+  }, [tablecontext]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const planetsFiltred = planetss.filter((p) => p.name
-      .includes(e.target.value));
+    const planetsFiltred = planetss.filter((p) => p.name.includes(e.target.value));
     setPlanets(planetsFiltred);
     if (e.target.value.length === 0) {
       setPlanets(tablecontext);
     }
   };
-  const handleClick = () => {
-    if (operador === 'maior que') {
-      const filtro = planetss.filter(
-        (p) => Number(p[coluna as keyof PlanetType]) > Number(numero),
+
+  const applyFilters = () => {
+    let filteredPlanets = planetss;
+
+    if (operator === 'maior que') {
+      filteredPlanets = filteredPlanets.filter(
+        (p) => Number(p[column as keyof PlanetType]) > Number(number),
       );
-      setPlanets(filtro);
-    }
-    if (operador === 'menor que') {
-      const filtro = planetss.filter(
-        (p) => Number(p[coluna as keyof PlanetType]) < Number(numero),
+    } else if (operator === 'menor que') {
+      filteredPlanets = filteredPlanets.filter(
+        (p) => Number(p[column as keyof PlanetType]) < Number(number),
       );
-      setPlanets(filtro);
-    }
-    if (operador === 'igual a') {
-      const filtro = planetss.filter(
-        (p) => Number(p[coluna as keyof PlanetType]) === Number(numero),
+    } else if (operator === 'igual a') {
+      filteredPlanets = filteredPlanets.filter(
+        (p) => Number(p[column as keyof PlanetType]) === Number(number),
       );
-      setPlanets(filtro);
     }
+
+    setPlanets(filteredPlanets);
+    setFiltroAplicado([...filtroAplicado, { column, operator, number }]);
+  };
+
+  const handleRemove = (filtro: FiltroAplicadoType) => {
+    const updatedFilters = filtroAplicado.filter((fp) => fp.column !== filtro.column);
+    const updatedPlanets = updatedFilters.reduce((result, af) => {
+      if (af.operator === 'maior que') {
+        return result
+          .filter((planet: PlanetType) => Number(planet[af.column as keyof PlanetType])
+           > Number(af.number));
+      } if (af.operator === 'menor que') {
+        return result
+          .filter((planet: PlanetType) => Number(planet[af.column as keyof PlanetType])
+           < Number(af.number));
+      } if (af.operator === 'igual a') {
+        return result
+          .filter((planet: PlanetType) => Number(planet[af.column as keyof PlanetType])
+           === Number(af.number));
+      }
+      return result;
+    }, tablecontext);
+
+    setFiltroAplicado(updatedFilters);
+    setPlanets(updatedPlanets);
+  };
+
+  const handleRemoveAllFilters = () => {
+    setPlanets(tablecontext);
+    setMultipleFilter(initialState);
+    setFiltroAplicado([]);
   };
 
   return (
@@ -54,17 +93,17 @@ function Table() {
         />
         <select
           data-testid="column-filter"
-          onChange={ (e) => setColuna(e.target.value) }
+          onChange={ (e) => setColumn(e.target.value) }
         >
-          <option>population</option>
-          <option>orbital_period</option>
-          <option>diameter</option>
-          <option>rotation_period</option>
-          <option>surface_water</option>
+          {
+            multipleFilter.map((fo, index) => (
+              <option key={ index }>{ fo }</option>
+            ))
+          }
         </select>
         <select
           data-testid="comparison-filter"
-          onChange={ (event) => setOperador(event.target.value) }
+          onChange={ (event) => setOperator(event.target.value) }
         >
           <option>maior que</option>
           <option>menor que</option>
@@ -72,17 +111,37 @@ function Table() {
         </select>
         <input
           type="number"
-          value={ numero }
+          value={ number }
           data-testid="value-filter"
-          onChange={ (event) => setNumero(event.target.value) }
+          onChange={ (event) => setNumber(event.target.value) }
         />
         <button
           data-testid="button-filter"
-          onClick={ handleClick }
+          onClick={ applyFilters }
         >
           Adicionar filtro
         </button>
+        <button
+          data-testid="button-remove-filters"
+          onClick={ handleRemoveAllFilters }
+        >
+          Remover todos os filtros
+        </button>
       </div>
+      {
+        filtroAplicado.map((fp, index) => (
+          <span data-testid="filter" key={ index }>
+            <p>
+              {
+                `${fp.column} ${fp.operator} ${fp.number}`
+              }
+            </p>
+            <button onClick={ () => handleRemove(fp) }>
+              Remover
+            </button>
+          </span>
+        ))
+      }
       <table>
         <thead>
           <tr>

@@ -15,3 +15,9 @@ export type PlanetType = {
   url: string,
 };
 export type ArrayPlanets = PlanetType[];
+
+export type FiltroAplicadoType = {
+  column: string,
+  operator: string,
+  number: string,
+};
